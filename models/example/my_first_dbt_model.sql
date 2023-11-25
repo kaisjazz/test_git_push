@@ -7,21 +7,27 @@
     Try changing "table" to "view" below
 */
 
-{{ config(materialized='table') }}
+
 
 with source_data as (
 
-    select 1 as id
+    select 5 as id,CURRENT_TIMESTAMP() as date_load
     union all
-    select null as id
+    select 1 as id,CURRENT_TIMESTAMP() as date_load
 
-)
+) 
 
 select *
 from source_data
 
-/*
-    Uncomment the line below to remove records with null `id` values
-*/
+{% if is_incremental() %}
+  -- this filter will only be applied on an incremental run
+  -- (uses >= to include records arriving later on the same day as the last run of this model)
+  where CURRENT_TIMESTAMP() > (select max(date_load) from {{ this }})
 
--- where id is not null
+{% endif %}
+
+
+
+
+
